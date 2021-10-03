@@ -1,6 +1,7 @@
 package com.node;
 
 import java.io.IOException;
+
 import org.apache.log4j.BasicConfigurator;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -18,6 +19,7 @@ import com.async.RootListCache;
 import com.async.StringCallbacker;
 
 public class Master implements Watcher {
+
 	private RootListCache<String> cache;
 	private Logger LOG = LoggerFactory.getLogger(this.getClass());
 	private ZooKeeper zookeeper;

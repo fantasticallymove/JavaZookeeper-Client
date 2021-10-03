@@ -1,12 +1,22 @@
 package com.node;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Op;
+import org.apache.zookeeper.OpResult;
+import org.apache.zookeeper.OpResult.CreateResult;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +29,10 @@ public class Workers implements Watcher {
 	private ZooKeeper zk;
 	private String domain;
 	private String status;
-	private WorkersStringCallBacker wscb = new WorkersStringCallBacker(this);
+	private WorkersStringCallBacker workersStringCallBacker = new WorkersStringCallBacker(this);
 	private WorkersStatusStringCallbacker wsscb = new WorkersStatusStringCallbacker(this);
-	private String rdn = "Joe";
+	private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
+	private String rdn = sdf.format(new Date(System.currentTimeMillis()));
 
 	/**
 	 * Main Platform
@@ -40,7 +51,6 @@ public class Workers implements Watcher {
 			Thread.sleep(Integer.MAX_VALUE);
 			wk.stopZookeeper();
 		}
-
 	}
 
 	/**
@@ -50,6 +60,7 @@ public class Workers implements Watcher {
 	 */
 	public Workers(String arg) {
 		this.domain = arg;
+		
 	}
 
 	/**
@@ -68,11 +79,13 @@ public class Workers implements Watcher {
 
 	public void registry() {
 
-		zk.create("/workers/worker-" + rdn, "Idle".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, wscb, null);
+		zk.create("/workers/worker-" + rdn, "Idle".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL,
+				workersStringCallBacker, null);
 	}
 
 	/**
 	 * When registry task successfully that will trigger this method.
+	 * workersStringCallBacker will trigger this method
 	 * 
 	 * @param status
 	 */
@@ -87,7 +100,11 @@ public class Workers implements Watcher {
 			zk.setData("/workers/worker-" + rdn, status.getBytes(), -1, wsscb, status);
 		}
 	}
-
+	
+	/**
+	 * 多重任務結構範例
+	 * 含返回判斷
+	 */
 	@Override
 	public void process(WatchedEvent e) {
 
@@ -97,6 +114,52 @@ public class Workers implements Watcher {
 		assert !"None".equals(e.getType().toString()) : "false";
 
 		LOG.info("Path：{} , Watcher-state：{} , Watcher-type：{}", e.getPath(), e.getState(), e.getType().toString());
+		try {
+			
+			/**
+			 * 原子型
+			 */
+			Boolean random = new Random().nextBoolean();
+			Op a = Op.create("/status/status-"+rdn+random+"1", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			Op b =Op.create("/status/status-"+rdn+random+"2", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			Op c =Op.create("/status/status-"+rdn+random+"3", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			List <Op> iterable = new ArrayList();
+			iterable.add(a);
+			iterable.add(b);
+			iterable.add(c);
+			
+			List<OpResult> result = zk.multi(iterable);
+			for(OpResult ele : result)
+			{
+				if(ele instanceof OpResult.CreateResult) //個別轉型
+				{
+					int code = ele.getType();
+					switch(code)
+					 {
+					 	case OpCode.create:
+					 		 LOG.info("多重任務結果 - 成功 {}",((CreateResult)ele).getPath());
+					 		 break;
+					 	case OpCode.error:
+					 		 LOG.info("多重任務結果 - 失敗 {}",((CreateResult)ele).getPath());
+					 		 break;
+					 }
+					
+				}
+				
+			}
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (KeeperException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
+	
+	Op deleteZnode(String z)
+	{
+		return Op.delete(z, -1);
+	}
+	
 
 }

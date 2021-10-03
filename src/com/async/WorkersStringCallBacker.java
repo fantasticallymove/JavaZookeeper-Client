@@ -26,7 +26,7 @@ public class WorkersStringCallBacker implements StringCallback{
 					wk.registry();;
 					break;
 			case OK:
-					LOG.info("Code:{}, Successfully built node! Path-"+path,Code.get(resultCode));
+					LOG.info("Code:{}, 成功建立工作任務，賦予任務狀態! Path-"+path,Code.get(resultCode));
 					wk.setStatus("Busy");
 					break;
 			case NODEEXISTS:
