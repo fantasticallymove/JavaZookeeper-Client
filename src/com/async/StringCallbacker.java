@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.node.Master;
 
+
 public class StringCallbacker implements StringCallback
 {
 	private Logger LOG = LoggerFactory.getLogger(this.getClass());

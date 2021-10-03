@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.node.Master;
 
 
+
 public class DataCallbacker implements DataCallback
 {
 	private Logger LOG = LoggerFactory.getLogger(this.getClass());
@@ -22,8 +23,7 @@ public class DataCallbacker implements DataCallback
 	@Override
 	public void processResult(int resultCode, String path, Object ctx, byte[] data, Stat stat) {
 		
-		if(ctx!=null)
-		LOG.info("Data: {} , {} , ctx: {}",new String(data),path,new String((byte[])ctx));		//觀測數據
+		LOG.info("Data: {} , {}",new String(data),stat);		//觀測數據
 		
 		switch(Code.get(resultCode))
 		{			
@@ -34,7 +34,7 @@ public class DataCallbacker implements DataCallback
 						master.runMaster();
 						break;
 			default:
-				LOG.info("Path :{} Code :{} , Node exists already!",path,Code.get(resultCode));
+				LOG.info("Code :{} , Node exists already!",Code.get(resultCode));
 		}		
 	}
 }
