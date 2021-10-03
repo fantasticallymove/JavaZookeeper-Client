@@ -2,7 +2,6 @@ package com.node;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -13,6 +12,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.OpResult.CreateResult;
+import org.apache.zookeeper.Transaction;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -26,7 +26,7 @@ import com.async.WorkersStringCallBacker;
 
 public class Workers implements Watcher {
 	private Logger LOG = LoggerFactory.getLogger(this.getClass());
-	private ZooKeeper zk;
+    public ZooKeeper zk;
 	private String domain;
 	private String status;
 	private WorkersStringCallBacker workersStringCallBacker = new WorkersStringCallBacker(this);
@@ -118,18 +118,16 @@ public class Workers implements Watcher {
 			
 			/**
 			 * 原子型
+			 * 多任務封裝
+			 * Transaction
 			 */
 			Boolean random = new Random().nextBoolean();
-			Op a = Op.create("/status/status-"+rdn+random+"1", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-			Op b =Op.create("/status/status-"+rdn+random+"2", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-			Op c =Op.create("/status/status-"+rdn+random+"3", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-			List <Op> iterable = new ArrayList();
-			iterable.add(a);
-			iterable.add(b);
-			iterable.add(c);
-			
-			List<OpResult> result = zk.multi(iterable);
-			for(OpResult ele : result)
+			Transaction tran = zk.transaction();
+			tran.create("/status/status-"+rdn+random+"1", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			tran.create("/status/status-"+rdn+random+"2", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			tran.create("/status/status-"+rdn+random+"3", random.toString().getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			List<OpResult> results = tran.commit(); //代替執行zk multi method
+			for(OpResult ele : results)
 			{
 				if(ele instanceof OpResult.CreateResult) //個別轉型
 				{
