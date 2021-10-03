@@ -6,7 +6,7 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.Master;
+import com.node.Master;
 
 
 public class DataCallbacker implements DataCallback
@@ -22,7 +22,8 @@ public class DataCallbacker implements DataCallback
 	@Override
 	public void processResult(int resultCode, String path, Object ctx, byte[] data, Stat stat) {
 		
-		LOG.info("Data: {} , {}",new String(data),stat);		//觀測數據
+		if(ctx!=null)
+		LOG.info("Data: {} , {} , ctx: {}",new String(data),path,new String((byte[])ctx));		//觀測數據
 		
 		switch(Code.get(resultCode))
 		{			
@@ -33,7 +34,7 @@ public class DataCallbacker implements DataCallback
 						master.runMaster();
 						break;
 			default:
-				LOG.info("Code :{} , Node exists already!",Code.get(resultCode));
+				LOG.info("Path :{} Code :{} , Node exists already!",path,Code.get(resultCode));
 		}		
 	}
 }
