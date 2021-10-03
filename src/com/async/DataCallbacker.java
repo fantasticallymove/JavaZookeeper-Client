@@ -6,7 +6,8 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.Master;
+import com.node.Master;
+
 
 
 public class DataCallbacker implements DataCallback
